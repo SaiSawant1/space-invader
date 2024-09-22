@@ -9,10 +9,6 @@ type Game struct {
 	sp *spaceship.Spaceship
 }
 
-func (g *Game) Draw() {
-	g.sp.Draw()
-}
-
 func NewGame(sp *spaceship.Spaceship) *Game {
 	return &Game{
 		sp: sp,
@@ -31,5 +27,22 @@ func (g *Game) HandleInput() {
 	}
 	if rl.IsKeyDown(rl.KeyDown) {
 		g.sp.MoveDown()
+	}
+	if rl.IsKeyDown(rl.KeySpace) {
+		g.sp.FireLaser()
+	}
+}
+
+func (g *Game) Update() {
+	for _, laser := range g.sp.Lasers {
+		laser.Update()
+	}
+}
+
+func (g *Game) Draw() {
+	g.sp.Draw()
+
+	for _, laser := range g.sp.Lasers {
+		laser.Draw()
 	}
 }

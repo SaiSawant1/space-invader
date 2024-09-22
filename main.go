@@ -19,15 +19,16 @@ func main() {
 
 	rl.SetTargetFPS(60)
 
-	game := game.NewGame(spaceship.NewSpaceship())
+	g := game.NewGame(spaceship.NewSpaceship())
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
-		game.HandleInput()
+		g.HandleInput()
+		g.Update()
 
 		rl.ClearBackground(grey)
 
-		game.Draw()
+		g.Draw()
 
 		rl.EndDrawing()
 	}
