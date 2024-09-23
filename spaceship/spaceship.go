@@ -40,18 +40,6 @@ func (sp *Spaceship) MoveRight() {
 		sp.position.X = float32(rl.GetScreenWidth()) - float32(sp.image.Width)
 	}
 }
-func (sp *Spaceship) MoveUp() {
-	sp.position.Y = sp.position.Y - 10
-	if sp.position.Y < 0 {
-		sp.position.Y = 0
-	}
-}
-func (sp *Spaceship) MoveDown() {
-	sp.position.Y = sp.position.Y + 10
-	if sp.position.Y > float32(rl.GetScreenHeight())-float32(sp.image.Height) {
-		sp.position.Y = float32(rl.GetScreenHeight()) - float32(sp.image.Height)
-	}
-}
 
 func (sp *Spaceship) FireLaser() {
 	currentTime := time.Now().UnixMilli()

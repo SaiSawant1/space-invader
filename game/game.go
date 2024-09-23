@@ -22,12 +22,6 @@ func (g *Game) HandleInput() {
 	if rl.IsKeyDown(rl.KeyRight) {
 		g.sp.MoveRight()
 	}
-	if rl.IsKeyDown(rl.KeyUp) {
-		g.sp.MoveUp()
-	}
-	if rl.IsKeyDown(rl.KeyDown) {
-		g.sp.MoveDown()
-	}
 	if rl.IsKeyDown(rl.KeySpace) {
 		g.sp.FireLaser()
 	}
@@ -37,6 +31,7 @@ func (g *Game) Update() {
 	for _, laser := range g.sp.Lasers {
 		laser.Update()
 	}
+	g.deleteInactiveLasers()
 }
 
 func (g *Game) Draw() {
@@ -45,4 +40,14 @@ func (g *Game) Draw() {
 	for _, laser := range g.sp.Lasers {
 		laser.Draw()
 	}
+}
+
+func (g *Game) deleteInactiveLasers() {
+
+	for index, laser := range g.sp.Lasers {
+		if laser.IsActive == false {
+			g.sp.Lasers = append(g.sp.Lasers[:index], g.sp.Lasers[index+1:]...)
+		}
+	}
+
 }

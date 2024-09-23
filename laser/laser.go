@@ -5,14 +5,14 @@ import rl "github.com/gen2brain/raylib-go/raylib"
 type Laser struct {
 	position rl.Vector2
 	speed    int
-	isActive bool
+	IsActive bool
 }
 
 func NewLaser(position rl.Vector2, speed int) *Laser {
 	return &Laser{
 		position: position,
 		speed:    speed,
-		isActive: true,
+		IsActive: true,
 	}
 }
 
@@ -24,6 +24,6 @@ func (l Laser) Draw() {
 func (l *Laser) Update() {
 	l.position.Y += float32(l.speed)
 	if l.position.Y < 0 || l.position.Y > float32(rl.GetScreenHeight()) {
-		l.isActive = false
+		l.IsActive = false
 	}
 }
