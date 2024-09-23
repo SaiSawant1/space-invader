@@ -7,19 +7,23 @@ import (
 
 	"github.com/SaiSawant1/space-invader/alien"
 	"github.com/SaiSawant1/space-invader/laser"
+	mysteryship "github.com/SaiSawant1/space-invader/mystery-ship"
 	"github.com/SaiSawant1/space-invader/obstacle"
 	"github.com/SaiSawant1/space-invader/spaceship"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 type Game struct {
-	sp                      *spaceship.Spaceship
+	space_ship              *spaceship.Spaceship
+	mystery_ship            *mysteryship.MysteryShip
 	obstacles               []*obstacle.Obstacle
 	aliens                  []*alien.Alien
 	aliensDirection         int
 	alienLasers             []*laser.Laser
 	alienLaserShootInterval int64
 	lastAlienFired          int64
+	mysteryshipSpawIntercal int64
+	mysteryShipLastSpawn    int64
 }
 
 func NewGame(sp *spaceship.Spaceship) *Game {
@@ -29,31 +33,48 @@ func NewGame(sp *spaceship.Spaceship) *Game {
 
 	obstacles = g.createObstacles()
 	aliens = g.createAliens()
+	mp := mysteryship.NewMysteryShip()
+	mp.Spawn()
 
 	return &Game{
-		sp:                      sp,
+		space_ship:              sp,
+		mystery_ship:            mp,
 		obstacles:               obstacles,
 		aliens:                  aliens,
 		aliensDirection:         1,
 		lastAlienFired:          0,
 		alienLaserShootInterval: 350,
+		mysteryshipSpawIntercal: 20000,
+		mysteryShipLastSpawn:    0,
 	}
 }
 
 func (g *Game) HandleInput() {
 	if rl.IsKeyDown(rl.KeyLeft) {
-		g.sp.MoveLeft()
+		g.space_ship.MoveLeft()
 	}
 	if rl.IsKeyDown(rl.KeyRight) {
-		g.sp.MoveRight()
+		g.space_ship.MoveRight()
 	}
 	if rl.IsKeyDown(rl.KeySpace) {
-		g.sp.FireLaser()
+		g.space_ship.FireLaser()
 	}
 }
 
 func (g *Game) Update() {
-	for _, laser := range g.sp.Lasers {
+	currentTime := time.Now().UnixMilli()
+	if currentTime-g.mysteryShipLastSpawn > g.mysteryshipSpawIntercal {
+		g.mystery_ship.Spawn()
+		g.mysteryShipLastSpawn = currentTime
+		max := big.NewInt(20000)
+		randomInterval, err := rand.Int(rand.Reader, max)
+		if err != nil {
+			g.mysteryshipSpawIntercal = 10000
+
+		}
+		g.mysteryshipSpawIntercal = randomInterval.Int64() + 10000
+	}
+	for _, laser := range g.space_ship.Lasers {
 		laser.Update()
 	}
 	for _, laser := range g.alienLasers {
@@ -61,13 +82,15 @@ func (g *Game) Update() {
 	}
 	g.moveAliens()
 	g.alienShotLaser()
+	g.mystery_ship.Update()
 	g.deleteInactiveLasers()
 }
 
 func (g *Game) Draw() {
-	g.sp.Draw()
+	g.space_ship.Draw()
+	g.mystery_ship.Draw()
 
-	for _, laser := range g.sp.Lasers {
+	for _, laser := range g.space_ship.Lasers {
 		laser.Draw()
 	}
 	for _, laser := range g.alienLasers {
@@ -85,9 +108,9 @@ func (g *Game) Draw() {
 
 func (g *Game) deleteInactiveLasers() {
 
-	for index, laser := range g.sp.Lasers {
+	for index, laser := range g.space_ship.Lasers {
 		if laser.IsActive == false {
-			g.sp.Lasers = append(g.sp.Lasers[:index], g.sp.Lasers[index+1:]...)
+			g.space_ship.Lasers = append(g.space_ship.Lasers[:index], g.space_ship.Lasers[index+1:]...)
 		}
 	}
 	for index, laser := range g.alienLasers {
@@ -152,7 +175,6 @@ func (g *Game) MoveDownAliens(distance int) {
 	for _, a := range g.aliens {
 		a.Position.Y += float32(distance)
 	}
-
 }
 
 func (g *Game) alienShotLaser() {
