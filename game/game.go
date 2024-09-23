@@ -1,22 +1,42 @@
 package game
 
 import (
+	"crypto/rand"
+	"math/big"
+	"time"
+
+	"github.com/SaiSawant1/space-invader/alien"
+	"github.com/SaiSawant1/space-invader/laser"
 	"github.com/SaiSawant1/space-invader/obstacle"
 	"github.com/SaiSawant1/space-invader/spaceship"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
 type Game struct {
-	sp        *spaceship.Spaceship
-	obstacles []*obstacle.Obstacle
+	sp                      *spaceship.Spaceship
+	obstacles               []*obstacle.Obstacle
+	aliens                  []*alien.Alien
+	aliensDirection         int
+	alienLasers             []*laser.Laser
+	alienLaserShootInterval int64
+	lastAlienFired          int64
 }
 
 func NewGame(sp *spaceship.Spaceship) *Game {
 	g := Game{}
-	obstacles := g.CreateObstacles()
+	var obstacles []*obstacle.Obstacle
+	var aliens []*alien.Alien
+
+	obstacles = g.createObstacles()
+	aliens = g.createAliens()
+
 	return &Game{
-		sp:        sp,
-		obstacles: obstacles,
+		sp:                      sp,
+		obstacles:               obstacles,
+		aliens:                  aliens,
+		aliensDirection:         1,
+		lastAlienFired:          0,
+		alienLaserShootInterval: 350,
 	}
 }
 
@@ -36,6 +56,11 @@ func (g *Game) Update() {
 	for _, laser := range g.sp.Lasers {
 		laser.Update()
 	}
+	for _, laser := range g.alienLasers {
+		laser.Update()
+	}
+	g.moveAliens()
+	g.alienShotLaser()
 	g.deleteInactiveLasers()
 }
 
@@ -45,9 +70,16 @@ func (g *Game) Draw() {
 	for _, laser := range g.sp.Lasers {
 		laser.Draw()
 	}
+	for _, laser := range g.alienLasers {
+		laser.Draw()
+	}
 
 	for _, obs := range g.obstacles {
 		obs.Draw()
+	}
+
+	for _, a := range g.aliens {
+		a.Draw()
 	}
 }
 
@@ -58,10 +90,15 @@ func (g *Game) deleteInactiveLasers() {
 			g.sp.Lasers = append(g.sp.Lasers[:index], g.sp.Lasers[index+1:]...)
 		}
 	}
+	for index, laser := range g.alienLasers {
+		if laser.IsActive == false {
+			g.alienLasers = append(g.alienLasers[:index], g.alienLasers[index+1:]...)
+		}
+	}
 
 }
 
-func (g *Game) CreateObstacles() []*obstacle.Obstacle {
+func (g *Game) createObstacles() []*obstacle.Obstacle {
 	obstacleWidth := len(obstacle.Grid[0]) * 3
 	gap := (rl.GetScreenWidth() - (4 * obstacleWidth)) / 5
 
@@ -74,4 +111,63 @@ func (g *Game) CreateObstacles() []*obstacle.Obstacle {
 
 	}
 	return g.obstacles
+}
+
+func (g *Game) createAliens() []*alien.Alien {
+	var aliens []*alien.Alien
+
+	for i := 0; i < 5; i++ {
+		for j := 0; j < 11; j++ {
+			x := 75 + j*55
+			y := 110 + i*55
+			if i < 1 {
+				aliens = append(aliens, alien.NewAlien(1, rl.Vector2{X: float32(x), Y: float32(y)}))
+			} else if i < 3 {
+				aliens = append(aliens, alien.NewAlien(2, rl.Vector2{X: float32(x), Y: float32(y)}))
+			} else {
+				aliens = append(aliens, alien.NewAlien(3, rl.Vector2{X: float32(x), Y: float32(y)}))
+
+			}
+		}
+
+	}
+	return aliens
+}
+
+func (g *Game) moveAliens() {
+
+	for _, a := range g.aliens {
+		if float64(a.Position.X+float32(alien.Images[a.Type-1].Width)) > float64(rl.GetScreenWidth()) {
+			g.aliensDirection = -1
+		} else if a.Position.X < 0 {
+			g.aliensDirection = 1
+			g.MoveDownAliens(4)
+		}
+		a.Update(g.aliensDirection)
+	}
+
+}
+
+func (g *Game) MoveDownAliens(distance int) {
+	for _, a := range g.aliens {
+		a.Position.Y += float32(distance)
+	}
+
+}
+
+func (g *Game) alienShotLaser() {
+	currentTime := time.Now().UnixMilli()
+	if currentTime-g.lastAlienFired > g.alienLaserShootInterval && len(g.aliens) > 0 {
+
+		maxIndex := big.NewInt(int64(len(g.aliens)))
+		randomIndex, err := rand.Int(rand.Reader, maxIndex)
+		if err != nil {
+			randomIndex = big.NewInt(1) // Fallback to 1 on error
+		}
+		a := g.aliens[randomIndex.Int64()]
+		laserPosition := rl.Vector2{X: (a.Position.X + float32(alien.Images[a.Type-1].Width)/2),
+			Y: a.Position.Y + float32(alien.Images[a.Type-1].Height)}
+		g.alienLasers = append(g.alienLasers, laser.NewLaser(laserPosition, 6))
+		g.lastAlienFired = currentTime
+	}
 }
