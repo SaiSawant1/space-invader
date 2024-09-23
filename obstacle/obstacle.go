@@ -1,21 +1,54 @@
 package obstacle
 
-import rl "github.com/gen2brain/raylib-go/raylib"
+import (
+	"github.com/SaiSawant1/space-invader/block"
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
 
-type Obstacle struct {
-	image    rl.Texture2D
-	position rl.Vector2
+var Grid = [][]int32{
+	{0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0},
+	{0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0},
+	{0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0},
+	{0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1},
+	{1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1},
 }
 
-func NewObstacle() *Obstacle {
-	image := rl.LoadTexture("Graphics/alien_1.png")
+type Obstacle struct {
+	position rl.Vector2
+	Blocks   []*block.Block
+}
+
+func NewObstacle(position rl.Vector2) *Obstacle {
+
+	obs := Obstacle{}
+
+	for i := 0; i < len(Grid); i++ {
+		for j := 0; j < len(Grid[0]); j++ {
+			if Grid[i][j] == 1 {
+				pos_x := position.X + float32(j*3)
+				pos_y := position.Y + float32(i*3)
+				block := block.NewBlock(rl.Vector2{X: pos_x, Y: pos_y})
+				obs.Blocks = append(obs.Blocks, block)
+			}
+		}
+	}
+
 	return &Obstacle{
-		image:    image,
-		position: rl.Vector2{X: 100, Y: 100},
+		position: position,
+		Blocks:   obs.Blocks,
 	}
 }
 
 func (o *Obstacle) Draw() {
-	rl.DrawTexture(o.image, int32(o.position.X), int32(o.position.Y), rl.White)
-
+	for _, block := range o.Blocks {
+		block.Draw()
+	}
 }

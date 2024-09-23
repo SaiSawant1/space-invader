@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/SaiSawant1/space-invader/game"
-	"github.com/SaiSawant1/space-invader/obstacle"
 	"github.com/SaiSawant1/space-invader/spaceship"
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -21,13 +20,11 @@ func main() {
 	rl.SetTargetFPS(60)
 
 	g := game.NewGame(spaceship.NewSpaceship())
-	o := obstacle.NewObstacle()
 
 	for !rl.WindowShouldClose() {
 		rl.BeginDrawing()
 		g.HandleInput()
 		g.Update()
-		o.Draw()
 
 		rl.ClearBackground(grey)
 
