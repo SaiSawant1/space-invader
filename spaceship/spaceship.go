@@ -1,6 +1,7 @@
 package spaceship
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/SaiSawant1/space-invader/laser"
@@ -12,6 +13,7 @@ type Spaceship struct {
 	position     rl.Vector2
 	Lasers       []*laser.Laser
 	lastFireTime int64
+	health       int64
 }
 
 func NewSpaceship() *Spaceship {
@@ -21,6 +23,7 @@ func NewSpaceship() *Spaceship {
 		position: rl.Vector2{X: float32((rl.GetScreenWidth() - int(image.Width)) / 2),
 			Y: float32((rl.GetScreenHeight() - int(image.Height)))},
 		lastFireTime: 0.0,
+		health:       100,
 	}
 }
 
@@ -48,4 +51,14 @@ func (sp *Spaceship) FireLaser() {
 		sp.Lasers = append(sp.Lasers, laser.NewLaser(rl.Vector2{X: sp.position.X + float32(sp.image.Width)/2, Y: sp.position.Y}, -6))
 		sp.lastFireTime = currentTime
 	}
+}
+
+func (s *Spaceship) GetRect() rl.Rectangle {
+	rect := rl.Rectangle{X: s.position.X, Y: s.position.Y, Width: float32(s.image.Width), Height: float32(s.image.Height)}
+	return rect
+}
+
+func (s *Spaceship) Damage() {
+	s.health -= 5
+	fmt.Println(s.health)
 }

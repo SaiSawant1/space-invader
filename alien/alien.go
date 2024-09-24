@@ -34,3 +34,8 @@ func (a *Alien) Update(direction int) {
 	a.Position.X += float32(direction)
 
 }
+
+func (a *Alien) GetRect() rl.Rectangle {
+	rect := rl.Rectangle{X: a.Position.X, Y: a.Position.Y, Width: float32(Images[a.Type-1].Width), Height: float32(Images[a.Type-1].Height)}
+	return rect
+}

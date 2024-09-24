@@ -27,3 +27,12 @@ func (l *Laser) Update() {
 		l.IsActive = false
 	}
 }
+
+func (l *Laser) GetRect() rl.Rectangle {
+	return rl.Rectangle{
+		X:      l.position.X,
+		Y:      l.position.Y,
+		Height: 15,
+		Width:  4,
+	}
+}

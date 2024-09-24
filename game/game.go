@@ -62,6 +62,7 @@ func (g *Game) HandleInput() {
 }
 
 func (g *Game) Update() {
+	g.CheckForCollisions()
 	currentTime := time.Now().UnixMilli()
 	if currentTime-g.mysteryShipLastSpawn > g.mysteryshipSpawIntercal {
 		g.mystery_ship.Spawn()
@@ -192,4 +193,59 @@ func (g *Game) alienShotLaser() {
 		g.alienLasers = append(g.alienLasers, laser.NewLaser(laserPosition, 6))
 		g.lastAlienFired = currentTime
 	}
+}
+
+func (g *Game) CheckForCollisions() {
+	//space ship lasers and aliens
+	for laserIndex := len(g.space_ship.Lasers) - 1; laserIndex >= 0; laserIndex-- {
+		for alienIndex := len(g.aliens) - 1; alienIndex >= 0; alienIndex-- {
+			laser := g.space_ship.Lasers[laserIndex]
+			alien := g.aliens[alienIndex]
+			if rl.CheckCollisionRecs(laser.GetRect(), alien.GetRect()) {
+				g.space_ship.Lasers = append(g.space_ship.Lasers[:laserIndex], g.space_ship.Lasers[laserIndex+1:]...)
+				g.aliens = append(g.aliens[:alienIndex], g.aliens[alienIndex+1:]...)
+				break
+			}
+		}
+	}
+	//space ship lasers and obstacles{
+	for laserIndex := len(g.space_ship.Lasers) - 1; laserIndex >= 0; laserIndex-- {
+		for obstacleIndex := len(g.obstacles) - 1; obstacleIndex >= 0; obstacleIndex-- {
+			obstacle := g.obstacles[obstacleIndex]
+			for blockIndex := len(obstacle.Blocks) - 1; blockIndex >= 0; blockIndex-- {
+				laser := g.space_ship.Lasers[laserIndex]
+				block := obstacle.Blocks[blockIndex]
+				if rl.CheckCollisionRecs(block.GetRect(), laser.GetRect()) {
+					obstacle.Blocks = append(obstacle.Blocks[:blockIndex], obstacle.Blocks[blockIndex+1:]...)
+					laser.IsActive = false
+					break
+				}
+			}
+		}
+	}
+	//alien lasers and spaceship
+	for alienLaserIndex := len(g.alienLasers) - 1; alienLaserIndex >= 0; alienLaserIndex-- {
+		laser := g.alienLasers[alienLaserIndex]
+		if rl.CheckCollisionRecs(laser.GetRect(), g.space_ship.GetRect()) {
+			laser.IsActive = false
+			g.space_ship.Damage()
+		}
+	}
+
+	// alien laser and obstacles
+	for alienLaserIndex := len(g.alienLasers) - 1; alienLaserIndex >= 0; alienLaserIndex-- {
+		for obstacleIndex := len(g.obstacles) - 1; obstacleIndex >= 0; obstacleIndex-- {
+			obstacle := g.obstacles[obstacleIndex]
+			for blockIndex := len(obstacle.Blocks) - 1; blockIndex >= 0; blockIndex-- {
+				alienLaser := g.alienLasers[alienLaserIndex]
+				block := obstacle.Blocks[blockIndex]
+				if rl.CheckCollisionRecs(block.GetRect(), alienLaser.GetRect()) {
+					obstacle.Blocks = append(obstacle.Blocks[:blockIndex], obstacle.Blocks[blockIndex+1:]...)
+					alienLaser.IsActive = false
+					break
+				}
+			}
+		}
+	}
+
 }

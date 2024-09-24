@@ -55,3 +55,12 @@ func (m *MysteryShip) Draw() {
 
 	}
 }
+
+func (m *MysteryShip) GetRect() rl.Rectangle {
+	if m.Alive {
+		rect := rl.Rectangle{X: m.position.X, Y: m.position.Y, Width: float32(m.image.Width), Height: float32(m.image.Height)}
+		return rect
+	}
+	rect := rl.Rectangle{X: m.position.X, Y: m.position.Y, Width: 0, Height: 0}
+	return rect
+}
