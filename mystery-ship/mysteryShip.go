@@ -31,10 +31,10 @@ func (m *MysteryShip) Spawn() {
 	}
 
 	if side.Int64() == 0 {
-		m.position.X = 0
+		m.position.X = 25
 		m.speed = 3
 	} else {
-		m.position.X = float32(rl.GetScreenWidth()) - float32(m.image.Width)
+		m.position.X = float32(rl.GetScreenWidth()) - float32(m.image.Width) - 25
 		m.speed = -3
 	}
 	m.Alive = true
@@ -43,7 +43,7 @@ func (m *MysteryShip) Spawn() {
 func (m *MysteryShip) Update() {
 	if m.Alive == true {
 		m.position.X += float32(m.speed)
-		if m.position.X > float32(rl.GetScreenWidth()-int(m.image.Width)) || m.position.X < 0 {
+		if m.position.X > float32(rl.GetScreenWidth()-int(m.image.Width)-25) || m.position.X < 25 {
 			m.Alive = false
 		}
 	}

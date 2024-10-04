@@ -23,7 +23,7 @@ func (l Laser) Draw() {
 
 func (l *Laser) Update() {
 	l.position.Y += float32(l.speed)
-	if l.position.Y < 0 || l.position.Y > float32(rl.GetScreenHeight()) {
+	if l.position.Y < 25 || l.position.Y > float32(rl.GetScreenHeight()-100) {
 		l.IsActive = false
 	}
 }

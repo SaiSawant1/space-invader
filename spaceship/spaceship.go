@@ -1,7 +1,6 @@
 package spaceship
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/SaiSawant1/space-invader/laser"
@@ -21,7 +20,7 @@ func NewSpaceship() *Spaceship {
 	return &Spaceship{
 		image: image,
 		position: rl.Vector2{X: float32((rl.GetScreenWidth() - int(image.Width)) / 2),
-			Y: float32((rl.GetScreenHeight() - int(image.Height)))},
+			Y: float32((rl.GetScreenHeight() - int(image.Height) - 100))},
 		lastFireTime: 0.0,
 		health:       100,
 	}
@@ -33,14 +32,14 @@ func (sp *Spaceship) Draw() {
 
 func (sp *Spaceship) MoveLeft() {
 	sp.position.X = sp.position.X - 10
-	if sp.position.X < 0 {
-		sp.position.X = 0
+	if sp.position.X < 25 {
+		sp.position.X = 25
 	}
 }
 func (sp *Spaceship) MoveRight() {
 	sp.position.X = sp.position.X + 10
-	if sp.position.X > (float32(rl.GetScreenWidth()) - float32(sp.image.Width)) {
-		sp.position.X = float32(rl.GetScreenWidth()) - float32(sp.image.Width)
+	if sp.position.X > (float32(rl.GetScreenWidth()) - float32(sp.image.Width) - 25) {
+		sp.position.X = float32(rl.GetScreenWidth()) - float32(sp.image.Width) - 25
 	}
 }
 
@@ -59,6 +58,8 @@ func (s *Spaceship) GetRect() rl.Rectangle {
 }
 
 func (s *Spaceship) Damage() {
-	s.health -= 5
-	fmt.Println(s.health)
+	s.health -= 35
+}
+func (s *Spaceship) GetCurrentHealth() int64 {
+	return s.health
 }

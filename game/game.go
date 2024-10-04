@@ -24,6 +24,8 @@ type Game struct {
 	lastAlienFired          int64
 	mysteryshipSpawIntercal int64
 	mysteryShipLastSpawn    int64
+	Lives                   int64
+	Run                     bool
 }
 
 func NewGame(sp *spaceship.Spaceship) *Game {
@@ -46,6 +48,8 @@ func NewGame(sp *spaceship.Spaceship) *Game {
 		alienLaserShootInterval: 350,
 		mysteryshipSpawIntercal: 20000,
 		mysteryShipLastSpawn:    0,
+		Lives:                   3,
+		Run:                     true,
 	}
 }
 
@@ -62,29 +66,36 @@ func (g *Game) HandleInput() {
 }
 
 func (g *Game) Update() {
-	g.CheckForCollisions()
-	currentTime := time.Now().UnixMilli()
-	if currentTime-g.mysteryShipLastSpawn > g.mysteryshipSpawIntercal {
-		g.mystery_ship.Spawn()
-		g.mysteryShipLastSpawn = currentTime
-		max := big.NewInt(20000)
-		randomInterval, err := rand.Int(rand.Reader, max)
-		if err != nil {
-			g.mysteryshipSpawIntercal = 10000
+	if g.Run {
 
+		g.CheckForCollisions()
+		currentTime := time.Now().UnixMilli()
+		if currentTime-g.mysteryShipLastSpawn > g.mysteryshipSpawIntercal {
+			g.mystery_ship.Spawn()
+			g.mysteryShipLastSpawn = currentTime
+			max := big.NewInt(20000)
+			randomInterval, err := rand.Int(rand.Reader, max)
+			if err != nil {
+				g.mysteryshipSpawIntercal = 10000
+
+			}
+			g.mysteryshipSpawIntercal = randomInterval.Int64() + 10000
 		}
-		g.mysteryshipSpawIntercal = randomInterval.Int64() + 10000
+		for _, laser := range g.space_ship.Lasers {
+			laser.Update()
+		}
+		for _, laser := range g.alienLasers {
+			laser.Update()
+		}
+		g.moveAliens()
+		g.alienShotLaser()
+		g.mystery_ship.Update()
+		g.deleteInactiveLasers()
+	} else {
+		if rl.IsKeyDown(rl.KeyEnter) {
+			g.reset()
+		}
 	}
-	for _, laser := range g.space_ship.Lasers {
-		laser.Update()
-	}
-	for _, laser := range g.alienLasers {
-		laser.Update()
-	}
-	g.moveAliens()
-	g.alienShotLaser()
-	g.mystery_ship.Update()
-	g.deleteInactiveLasers()
 }
 
 func (g *Game) Draw() {
@@ -129,7 +140,7 @@ func (g *Game) createObstacles() []*obstacle.Obstacle {
 	for i := 0; i < 4; i++ {
 		offsetX := (i+1)*gap + i*obstacleWidth
 
-		position := rl.Vector2{X: float32(offsetX), Y: float32(rl.GetScreenHeight() - 100)}
+		position := rl.Vector2{X: float32(offsetX), Y: float32(rl.GetScreenHeight() - 200)}
 		obs := obstacle.NewObstacle(position)
 		g.obstacles = append(g.obstacles, obs)
 
@@ -161,9 +172,9 @@ func (g *Game) createAliens() []*alien.Alien {
 func (g *Game) moveAliens() {
 
 	for _, a := range g.aliens {
-		if float64(a.Position.X+float32(alien.Images[a.Type-1].Width)) > float64(rl.GetScreenWidth()) {
+		if float64(a.Position.X+float32(alien.Images[a.Type-1].Width)) > float64(rl.GetScreenWidth())-25 {
 			g.aliensDirection = -1
-		} else if a.Position.X < 0 {
+		} else if a.Position.X < 25 {
 			g.aliensDirection = 1
 			g.MoveDownAliens(4)
 		}
@@ -202,7 +213,7 @@ func (g *Game) CheckForCollisions() {
 			laser := g.space_ship.Lasers[laserIndex]
 			alien := g.aliens[alienIndex]
 			if rl.CheckCollisionRecs(laser.GetRect(), alien.GetRect()) {
-				g.space_ship.Lasers = append(g.space_ship.Lasers[:laserIndex], g.space_ship.Lasers[laserIndex+1:]...)
+				laser.IsActive = false
 				g.aliens = append(g.aliens[:alienIndex], g.aliens[alienIndex+1:]...)
 				break
 			}
@@ -216,8 +227,8 @@ func (g *Game) CheckForCollisions() {
 				laser := g.space_ship.Lasers[laserIndex]
 				block := obstacle.Blocks[blockIndex]
 				if rl.CheckCollisionRecs(block.GetRect(), laser.GetRect()) {
-					obstacle.Blocks = append(obstacle.Blocks[:blockIndex], obstacle.Blocks[blockIndex+1:]...)
 					laser.IsActive = false
+					obstacle.Blocks = append(obstacle.Blocks[:blockIndex], obstacle.Blocks[blockIndex+1:]...)
 					break
 				}
 			}
@@ -229,6 +240,9 @@ func (g *Game) CheckForCollisions() {
 		if rl.CheckCollisionRecs(laser.GetRect(), g.space_ship.GetRect()) {
 			laser.IsActive = false
 			g.space_ship.Damage()
+			if g.space_ship.GetCurrentHealth() <= 0 {
+				g.GameOver()
+			}
 		}
 	}
 
@@ -248,4 +262,36 @@ func (g *Game) CheckForCollisions() {
 		}
 	}
 
+	//spaceship myserty  mystership
+	for laserIndex := len(g.space_ship.Lasers) - 1; laserIndex >= 0; laserIndex-- {
+		laser := g.space_ship.Lasers[laserIndex]
+		if rl.CheckCollisionRecs(laser.GetRect(), g.mystery_ship.GetRect()) {
+			laser.IsActive = false
+			g.mystery_ship.Alive = false
+			break
+		}
+	}
+
+	//aline collide with obstacles
+	for alienIndex := len(g.aliens) - 1; alienIndex >= 0; alienIndex-- {
+		for obstacleIndex := len(g.obstacles) - 1; obstacleIndex >= 0; obstacleIndex-- {
+			obstacle := g.obstacles[obstacleIndex]
+			for blockIndex := len(obstacle.Blocks) - 1; blockIndex >= 0; blockIndex-- {
+				block := obstacle.Blocks[blockIndex]
+				alien := g.aliens[alienIndex]
+				if rl.CheckCollisionRecs(block.GetRect(), alien.GetRect()) {
+					obstacle.Blocks = append(obstacle.Blocks[:blockIndex], obstacle.Blocks[blockIndex+1:]...)
+					break
+				}
+			}
+		}
+	}
+
+}
+func (g *Game) GameOver() {
+	g.Run = false
+}
+
+func (g *Game) reset() {
+	*g = *NewGame(spaceship.NewSpaceship())
 }
